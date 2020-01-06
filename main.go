@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/yunomu/httppipe/server"
+	"github.com/yunomu/httppipe/handler"
 )
 
 var (
@@ -18,11 +18,24 @@ func init() {
 	log.SetOutput(os.Stderr)
 }
 
+type logger struct{}
+
+func (l *logger) Error(err error) {
+	log.Println("Error", err)
+}
+
+func (l *logger) Info(msg string) {
+	log.Println("Info", msg)
+}
+
+var _ handler.Logger = (*logger)(nil)
+
 func main() {
 	mux := http.NewServeMux()
-	mux.Handle("/", server.NewServer())
+	mux.Handle("/", handler.NewHandler(
+		handler.SetLogger(&logger{}),
+	))
 
-	log.Println("start")
 	if err := http.ListenAndServe(*bind, mux); err != nil {
 		log.Fatalln(err)
 	}
